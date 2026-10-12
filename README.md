@@ -12,15 +12,6 @@ TrailTuned AI is a precision mountain bike setup, suspension tuning, and trail a
 
 ---
 
-## 🚀 Getting Started & Hosting via GitHub Pages
-
-1. **Clone or Download** this repository.
-2. Ensure you have the `index.html`, `manifest.json`, and `sw.js` files in your repository root.
-3. Go to your GitHub repository **Settings** $\rightarrow$ **Pages**.
-4. Set the source branch to **`main`** and save. Your live app URL will be generated within a minute!
-
----
-
 ## 🔑 Setting Up Your Free Gemini API Key
 
 TrailTuned AI connects securely to Google's Gemini API directly from your browser. 
