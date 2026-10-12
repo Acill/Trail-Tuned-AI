@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrailTuned AI - Mountain Bike Setup & Trail Advisor</title>
-    <!-- Tailwind CSS CDN -->
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f97316">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TrailTuned">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,20 +21,15 @@
             theme: {
                 extend: {
                     colors: {
-                        trail: {
-                            50: '#f4f6f4',
-                            100: '#e3e8e3',
-                            200: '#c7d2c7',
-                            300: '#9fb29f',
-                            400: '#718c71',
-                            500: '#526b52',
-                            600: '#3f533f',
-                            700: '#334333',
-                            800: '#2a362a',
-                            900: '#232d23',
-                            950: '#131813',
-                            accent: '#f97316', // Anodized orange accent
-                            bronze: '#d97706',
+                        dark: {
+                            900: '#090d16',
+                            800: '#111827',
+                            700: '#1f2937',
+                            600: '#374151',
+                        },
+                        orange: {
+                            500: '#f97316',
+                            600: '#ea580c',
                         }
                     }
                 }
@@ -34,898 +38,492 @@
     </script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- FontAwesome for icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #131813; }
-        ::-webkit-scrollbar-thumb { background: #3f533f; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #526b52; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-trail-950 text-trail-100 min-h-screen flex flex-col selection:bg-trail-accent selection:text-white" x-data="appData()" x-init="initApp()">
+<body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col selection:bg-orange-500 selection:text-white" x-data="trailApp()">
 
-    <!-- Navigation Bar -->
-    <header class="sticky top-0 z-50 bg-trail-900/90 backdrop-blur-md border-b border-trail-800">
+    <!-- Header -->
+    <header class="bg-dark-800 border-b border-gray-800 sticky top-0 z-50 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-trail-accent to-trail-bronze flex items-center justify-center shadow-lg shadow-trail-accent/20">
-                    <i class="fa-solid fa-person-biking text-white text-xl"></i>
+                <div class="bg-gradient-to-tr from-orange-600 to-amber-500 p-2 rounded-xl text-white shadow-md shadow-orange-500/20">
+                    <i class="fa-solid fa-bicycle text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-trail-200 to-trail-400 bg-clip-text text-transparent">TrailTuned <span class="text-trail-accent">AI</span></h1>
-                    <p class="text-xs text-trail-400">Smart Suspension & Trail Tuner</p>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-gray-200 to-orange-400 bg-clip-text text-transparent">TrailTuned AI</h1>
+                    <p class="text-xs text-gray-400">Precision MTB Setup & Trail Advisor</p>
                 </div>
             </div>
-            
-            <!-- Navigation Tabs -->
-            <nav class="hidden md:flex space-x-1">
-                <button @click="currentTab = 'garage'" :class="currentTab === 'garage' ? 'bg-trail-800 text-trail-accent border-trail-accent' : 'text-trail-300 hover:text-white hover:bg-trail-800/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 border border-transparent">
-                    <i class="fa-solid fa-bicycle"></i>
-                    <span>My Garage & Setup</span>
-                </button>
-                <button @click="currentTab = 'advisor'" :class="currentTab === 'advisor' ? 'bg-trail-800 text-trail-accent border-trail-accent' : 'text-trail-300 hover:text-white hover:bg-trail-800/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 border border-transparent">
-                    <i class="fa-solid fa-map-location-dot"></i>
-                    <span>AI Trail Advisor & Tune</span>
-                </button>
-                <button @click="currentTab = 'aiChat'" :class="currentTab === 'aiChat' ? 'bg-trail-800 text-trail-accent border-trail-accent' : 'text-trail-300 hover:text-white hover:bg-trail-800/50'" class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 border border-transparent">
-                    <i class="fa-solid fa-robot"></i>
-                    <span>Mechanic Chat</span>
-                </button>
-            </nav>
 
-            <!-- Quick Profile Picker -->
             <div class="flex items-center space-x-3">
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" class="flex items-center space-x-2 bg-trail-800 hover:bg-trail-700 text-xs sm:text-sm font-medium px-3 py-2 rounded-lg border border-trail-700 transition">
-                        <span class="w-2 h-2 rounded-full bg-trail-accent"></span>
-                        <span class="truncate max-w-[120px] sm:max-w-[160px]" x-text="activeBike.name"></span>
-                        <i class="fa-solid fa-chevron-down text-trail-400 text-xs"></i>
-                    </button>
-                    <div x-show="open" @click.outside="open = false" x-cloak class="absolute right-0 mt-2 w-64 bg-trail-900 border border-trail-800 rounded-xl shadow-2xl py-2 z-50">
-                        <div class="px-3 py-1 text-xs font-semibold text-trail-400 uppercase tracking-wider">Select Bike Profile</div>
-                        <template x-for="bike in bikes" :key="bike.id">
-                            <button @click="switchBike(bike.id); open = false;" class="w-full text-left px-3 py-2 hover:bg-trail-800 flex items-center justify-between text-sm transition">
-                                <span x-text="bike.name" :class="bike.id === activeBikeId ? 'text-trail-accent font-semibold' : 'text-trail-200'"></span>
-                                <i x-show="bike.id === activeBikeId" class="fa-solid fa-check text-trail-accent text-xs"></i>
-                            </button>
-                        </template>
-                        <div class="border-t border-trail-800 my-1"></div>
-                        <button @click="addNewBike(); open = false;" class="w-full text-left px-3 py-2 hover:bg-trail-800 text-trail-accent text-sm font-medium flex items-center space-x-2">
-                            <i class="fa-solid fa-plus-circle"></i>
-                            <span>Add New Bike</span>
-                        </button>
-                    </div>
-                </div>
+                <!-- PWA Install Button -->
+                <button x-show="deferredPrompt" @click="installPwa()" class="hidden sm:inline-flex items-center space-x-2 bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow-md shadow-orange-600/30" x-cloak>
+                    <i class="fa-solid fa-download"></i>
+                    <span>Install App</span>
+                </button>
+
+                <!-- API Key Status / Modal Trigger -->
+                <button @click="showSettings = true" class="bg-dark-700 hover:bg-dark-600 text-gray-300 px-3 py-2 rounded-lg text-xs font-medium flex items-center space-x-2 border border-gray-700 transition">
+                    <i class="fa-solid fa-key text-orange-400"></i>
+                    <span class="hidden md:inline" x-text="apiKey ? 'API Connected' : 'Set Gemini Key'"></span>
+                </button>
             </div>
-        </div>
-        <!-- Mobile Navigation Subbar -->
-        <div class="md:hidden flex border-t border-trail-800 bg-trail-900 px-2 py-1.5 justify-around">
-            <button @click="currentTab = 'garage'" :class="currentTab === 'garage' ? 'text-trail-accent bg-trail-800/80' : 'text-trail-400'" class="flex-1 py-2 text-xs font-medium rounded-md flex flex-col items-center justify-center space-y-1">
-                <i class="fa-solid fa-bicycle text-sm"></i>
-                <span>Garage</span>
-            </button>
-            <button @click="currentTab = 'advisor'" :class="currentTab === 'advisor' ? 'text-trail-accent bg-trail-800/80' : 'text-trail-400'" class="flex-1 py-2 text-xs font-medium rounded-md flex flex-col items-center justify-center space-y-1">
-                <i class="fa-solid fa-map-location-dot text-sm"></i>
-                <span>AI Advisor</span>
-            </button>
-            <button @click="currentTab = 'aiChat'" :class="currentTab === 'aiChat' ? 'text-trail-accent bg-trail-800/80' : 'text-trail-400'" class="flex-1 py-2 text-xs font-medium rounded-md flex flex-col items-center justify-center space-y-1">
-                <i class="fa-solid fa-robot text-sm"></i>
-                <span>Chat</span>
-            </button>
         </div>
     </header>
 
-    <!-- Main Body Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- TAB 1: GARAGE & BIKE SETUP FORM -->
-        <div x-show="currentTab === 'garage'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-            
-            <!-- Top Banner / Header -->
-            <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between bg-gradient-to-r from-trail-900 to-trail-800 border border-trail-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                <div class="absolute right-0 top-0 bottom-0 w-1/3 opacity-20 pointer-events-none hidden lg:block bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80')"></div>
-                <div class="relative z-10 max-w-2xl">
-                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-trail-accent/10 border border-trail-accent/30 text-trail-accent text-xs font-semibold mb-3">
+        <!-- Left Column: Bike & Gear Setup Form (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-orange-400 flex items-center space-x-2">
                         <i class="fa-solid fa-sliders"></i>
-                        <span>Active Bike Profile</span>
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight" x-text="activeBike.name"></h2>
-                    <p class="text-trail-300 text-sm mt-1">Configure your rig specs, suspension units, tire pressures, and rider gear weight to calculate baseline tuning and AI trail setups.</p>
-                </div>
-                <div class="mt-4 md:mt-0 flex items-center space-x-3 relative z-10">
-                    <button @click="saveBikes()" class="px-4 py-2.5 bg-trail-accent hover:bg-orange-600 text-white font-semibold rounded-xl text-sm shadow-lg shadow-trail-accent/25 transition flex items-center space-x-2">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        <span>Save Setup</span>
-                    </button>
-                    <button @click="loadPresetBike()" class="px-4 py-2.5 bg-trail-800 hover:bg-trail-700 text-trail-200 font-medium rounded-xl text-sm border border-trail-700 transition flex items-center space-x-2">
-                        <i class="fa-solid fa-wand-magic-sparkles text-trail-accent"></i>
-                        <span>Load Preset</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Configuration Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- Left 2 Cols: Detailed Form Inputs -->
-                <div class="lg:col-span-2 space-y-6">
-                    
-                    <!-- General & Rider Info -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-trail-800">
-                            <h3 class="text-lg font-semibold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-user-gear text-trail-accent"></i>
-                                <span>Rider & Bike Basics</span>
-                            </h3>
-                            <span class="text-xs text-trail-400">Step 1 of 4</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Bike Name / Model</label>
-                                <input type="text" x-model="activeBike.name" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="e.g. Intense Tazer e-MTB">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Bike Category</label>
-                                <select x-model="activeBike.category" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition">
-                                    <option value="Trail">Trail / All-Mountain</option>
-                                    <option value="Enduro">Enduro / Gravity</option>
-                                    <option value="e-MTB">e-MTB (Electric Mountain Bike)</option>
-                                    <option value="Cross-Country">Cross-Country (XC)</option>
-                                    <option value="Downhill">Downhill / Park</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Rider Weight in Full Ride Gear</label>
-                                <div class="flex space-x-2">
-                                    <input type="number" x-model.number="activeBike.riderWeight" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="185">
-                                    <select x-model="activeBike.weightUnit" class="bg-trail-950 border border-trail-800 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition">
-                                        <option value="lbs">lbs</option>
-                                        <option value="kg">kg</option>
-                                    </select>
-                                </div>
-                                <p class="text-[11px] text-trail-400 mt-1">Include helmet, pack, water, pads, and shoes.</p>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Riding Style / Preference</label>
-                                <select x-model="activeBike.ridingStyle" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition">
-                                    <option value="Balanced">Balanced (All-Around Trail)</option>
-                                    <option value="Plush / DH">Plush / High Speed Descender</option>
-                                    <option value="Firm / Climbing">Firm / Efficient Climber</option>
-                                    <option value="Aggressive Enduro">Aggressive Enduro / Technical</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Suspension Setup -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-trail-800">
-                            <h3 class="text-lg font-semibold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-gauge-high text-trail-accent"></i>
-                                <span>Suspension Setup (Fork & Shock)</span>
-                            </h3>
-                            <span class="text-xs text-trail-400">Step 2 of 4</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <!-- Fork -->
-                            <div class="space-y-3 bg-trail-950/60 p-4 rounded-xl border border-trail-800">
-                                <h4 class="font-medium text-trail-accent text-sm flex items-center space-x-2">
-                                    <i class="fa-solid fa-arrows-up-down"></i>
-                                    <span>Front Fork</span>
-                                </h4>
-                                <div>
-                                    <label class="block text-xs text-trail-300 mb-1">Fork Make & Model</label>
-                                    <input type="text" x-model="activeBike.fork.model" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-2 text-white text-sm" placeholder="e.g. FOX 38 Factory Grip2, 170mm">
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Air Pressure (PSI)</label>
-                                        <input type="text" x-model="activeBike.fork.pressure" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. 85 PSI">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Volume Spacers</label>
-                                        <input type="text" x-model="activeBike.fork.tokens" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. 2 tokens">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Rebound Clicks (from out)</label>
-                                        <input type="text" x-model="activeBike.fork.rebound" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. 8 out">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Comp. (High/Low)</label>
-                                        <input type="text" x-model="activeBike.fork.compression" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. H: 5, L: 8">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Rear Shock -->
-                            <div class="space-y-3 bg-trail-950/60 p-4 rounded-xl border border-trail-800">
-                                <h4 class="font-medium text-trail-accent text-sm flex items-center space-x-2">
-                                    <i class="fa-solid fa-compress"></i>
-                                    <span>Rear Shock</span>
-                                </h4>
-                                <div>
-                                    <label class="block text-xs text-trail-300 mb-1">Shock Make & Model</label>
-                                    <input type="text" x-model="activeBike.shock.model" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-2 text-white text-sm" placeholder="e.g. FOX Float X2 Factory, 205x65">
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Air Pressure / Spring</label>
-                                        <input type="text" x-model="activeBike.shock.pressure" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. 195 PSI / 550lb">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Target Sag (%)</label>
-                                        <input type="text" x-model="activeBike.shock.sag" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. 30%">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Rebound Clicks</label>
-                                        <input type="text" x-model="activeBike.shock.rebound" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. 9 out">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] text-trail-400 mb-1">Comp. (High/Low)</label>
-                                        <input type="text" x-model="activeBike.shock.compression" class="w-full bg-trail-950 border border-trail-800 rounded-lg px-3 py-1.5 text-white text-sm" placeholder="e.g. H: 4, L: 6">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Wheels, Tires, Brakes & Drivetrain -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg">
-                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-trail-800">
-                            <h3 class="text-lg font-semibold text-white flex items-center space-x-2">
-                                <i class="fa-solid fa-dharmachakra text-trail-accent"></i>
-                                <span>Wheels, Tires, Brakes & Drivetrain</span>
-                            </h3>
-                            <span class="text-xs text-trail-400">Step 3 of 4</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Wheels & Rim Size</label>
-                                <input type="text" x-model="activeBike.wheels" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="e.g. Industry Nine Enduro 305 (29&quot; F / 27.5&quot; R)">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Tires (Front / Rear) & Casing</label>
-                                <input type="text" x-model="activeBike.tires" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="e.g. Schwalbe Albert Radial / Tacky Chan Super Gravity">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Tire Pressures (PSI)</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" x-model="activeBike.frontTirePressure" class="bg-trail-950 border border-trail-800 rounded-xl px-3 py-2.5 text-white text-sm" placeholder="Front: 23 PSI">
-                                    <input type="text" x-model="activeBike.rearTirePressure" class="bg-trail-950 border border-trail-800 rounded-xl px-3 py-2.5 text-white text-sm" placeholder="Rear: 26 PSI">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Brakes & Rotor Size</label>
-                                <input type="text" x-model="activeBike.brakes" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="e.g. Shimano XTR 4-Piston, 203mm rotors">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-medium text-trail-300 mb-1">Drivetrain & Other Setup Notes</label>
-                                <input type="text" x-model="activeBike.drivetrain" class="w-full bg-trail-950 border border-trail-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="e.g. SRAM XX Eagle AXS Transmission, CushCore inserts installed">
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Right 1 Col: Visual Component Card & Quick Presets -->
-                <div class="space-y-6">
-                    <!-- Component Visualizer Card -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-5 shadow-lg overflow-hidden relative">
-                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-trail-accent/10 rounded-full blur-2xl pointer-events-none"></div>
-                        <h3 class="text-sm font-semibold text-white mb-3 flex items-center justify-between">
-                            <span>Rig Component Preview</span>
-                            <span class="text-xs text-trail-accent font-normal">Personalized</span>
-                        </h3>
-                        
-                        <!-- Image Container with Fallback -->
-                        <div class="relative h-48 rounded-xl overflow-hidden mb-4 border border-trail-800 group bg-trail-950">
-                            <img :src="getBikeImage()" alt="Mountain Bike" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?auto=format&fit=crop&w=800&q=80'">
-                            <div class="absolute inset-0 bg-gradient-to-t from-trail-950 via-transparent to-transparent opacity-80"></div>
-                            <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                                <span class="bg-trail-900/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-semibold text-white border border-trail-700" x-text="activeBike.category"></span>
-                                <span class="text-xs text-trail-300 bg-trail-900/80 px-2.5 py-1 rounded-lg border border-trail-700" x-text="activeBike.riderWeight + ' ' + activeBike.weightUnit"></span>
-                            </div>
-                        </div>
-
-                        <!-- Summary specs list -->
-                        <div class="space-y-2.5 text-xs">
-                            <div class="flex justify-between py-1.5 border-b border-trail-800/60">
-                                <span class="text-trail-400">Fork</span>
-                                <span class="text-white font-medium truncate max-w-[180px]" x-text="activeBike.fork.model || 'Standard Fork'"></span>
-                            </div>
-                            <div class="flex justify-between py-1.5 border-b border-trail-800/60">
-                                <span class="text-trail-400">Shock</span>
-                                <span class="text-white font-medium truncate max-w-[180px]" x-text="activeBike.shock.model || 'Standard Shock'"></span>
-                            </div>
-                            <div class="flex justify-between py-1.5 border-b border-trail-800/60">
-                                <span class="text-trail-400">Tires</span>
-                                <span class="text-white font-medium truncate max-w-[180px]" x-text="activeBike.tires || 'Tubeless Setup'"></span>
-                            </div>
-                            <div class="flex justify-between py-1.5">
-                                <span class="text-trail-400">Brakes</span>
-                                <span class="text-white font-medium truncate max-w-[180px]" x-text="activeBike.brakes || 'Hydraulic Disc'"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Preset Selectors -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-5 shadow-lg">
-                        <h3 class="text-sm font-semibold text-white mb-3">Quick Preset Builds</h3>
-                        <div class="space-y-2">
-                            <button @click="applyPreset('Intense Tazer e-MTB')" class="w-full text-left p-3 rounded-xl bg-trail-950 hover:bg-trail-800/80 border border-trail-800 transition flex items-center justify-between group">
-                                <div>
-                                    <div class="text-xs font-semibold text-white group-hover:text-trail-accent transition">Intense Tazer e-MTB</div>
-                                    <div class="text-[11px] text-trail-400">Mixed wheels, FOX 38, Shimano EP8</div>
-                                </div>
-                                <i class="fa-solid fa-arrow-right text-xs text-trail-500 group-hover:text-trail-accent transition"></i>
-                            </button>
-                            <button @click="applyPreset('Specialized Kenevo SL')" class="w-full text-left p-3 rounded-xl bg-trail-950 hover:bg-trail-800/80 border border-trail-800 transition flex items-center justify-between group">
-                                <div>
-                                    <div class="text-xs font-semibold text-white group-hover:text-trail-accent transition">Specialized Kenevo SL</div>
-                                    <div class="text-[11px] text-trail-400">Full Enduro e-Bike, 170mm travel</div>
-                                </div>
-                                <i class="fa-solid fa-arrow-right text-xs text-trail-500 group-hover:text-trail-accent transition"></i>
-                            </button>
-                            <button @click="applyPreset('Trek Fuel EX 9.8')" class="w-full text-left p-3 rounded-xl bg-trail-950 hover:bg-trail-800/80 border border-trail-800 transition flex items-center justify-between group">
-                                <div>
-                                    <div class="text-xs font-semibold text-white group-hover:text-trail-accent transition">Trek Fuel EX 9.8</div>
-                                    <div class="text-[11px] text-trail-400">Versatile Trail Carbon Rig</div>
-                                </div>
-                                <i class="fa-solid fa-arrow-right text-xs text-trail-500 group-hover:text-trail-accent transition"></i>
-                            </button>
-                            <button @click="applyPreset('Intense 951 Trail')" class="w-full text-left p-3 rounded-xl bg-trail-950 hover:bg-trail-800/80 border border-trail-800 transition flex items-center justify-between group">
-                                <div>
-                                    <div class="text-xs font-semibold text-white group-hover:text-trail-accent transition">Intense 951 Trail</div>
-                                    <div class="text-[11px] text-trail-400">All-Mountain Performance</div>
-                                </div>
-                                <i class="fa-solid fa-arrow-right text-xs text-trail-500 group-hover:text-trail-accent transition"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- TAB 2: AI TRAIL ADVISOR & TUNE -->
-        <div x-show="currentTab === 'advisor'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
-            
-            <!-- Advisor Search Banner -->
-            <div class="bg-gradient-to-r from-trail-900 to-trail-800 border border-trail-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-                <div class="max-w-3xl">
-                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-trail-accent/10 border border-trail-accent/30 text-trail-accent text-xs font-semibold mb-3">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>Gemini AI Trail Advisor</span>
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Where are you riding today?</h2>
-                    <p class="text-trail-300 text-sm mt-1 mb-6">Enter any trail network, park, or destination (e.g. Sycamore Canyon, Wendy Trailhead, Moab Whole Enchilada, Whistler Bike Park, etc.). Our AI will cross-reference your bike specs and rider weight to deliver customized trail recommendations and precise suspension & tire setups.</p>
-                    
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <div class="relative flex-1">
-                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-trail-400">
-                                <i class="fa-solid fa-location-dot"></i>
-                            </span>
-                            <input type="text" x-model="trailLocation" @keydown.enter="getAiRecommendation()" class="w-full bg-trail-950 border border-trail-800 rounded-xl pl-11 pr-4 py-3.5 text-white text-sm focus:outline-none focus:border-trail-accent transition shadow-inner" placeholder="Enter trail name, region, or park...">
-                        </div>
-                        <button @click="getAiRecommendation()" :disabled="aiLoading" class="px-6 py-3.5 bg-trail-accent hover:bg-orange-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm shadow-lg shadow-trail-accent/25 transition flex items-center justify-center space-x-2 shrink-0">
-                            <i x-show="!aiLoading" class="fa-solid fa-bolt"></i>
-                            <i x-show="aiLoading" class="fa-solid fa-circle-notch fa-spin"></i>
-                            <span x-text="aiLoading ? 'Analyzing Trail...' : 'Generate AI Tune'"></span>
+                        <span>Bike & Gear Configuration</span>
+                    </h2>
+                    <div class="flex space-x-2">
+                        <select x-model="selectedPreset" @change="loadPreset(selectedPreset)" class="bg-dark-700 text-gray-300 text-xs rounded-lg px-2.5 py-1.5 border border-gray-700 focus:outline-none focus:border-orange-500">
+                            <option value="">Quick Presets...</option>
+                            <option value="tazer">2027 Intense Tazer e-MTB</option>
+                            <option value="kenevo">Specialized Kenevo SL</option>
+                            <option value="fuel">Trek Fuel EX 9.8</option>
+                            <option value="tracer">Intense Tracer</option>
+                        </select>
+                        <button @click="resetForm()" title="Reset" class="text-gray-400 hover:text-white p-1.5 rounded-lg bg-dark-700 border border-gray-700">
+                            <i class="fa-solid fa-rotate-right text-xs"></i>
                         </button>
                     </div>
+                </div>
 
-                    <!-- Popular Quick Trails Chips -->
-                    <div class="mt-4 flex flex-wrap items-center gap-2">
-                        <span class="text-xs text-trail-400 font-medium mr-1">Popular:</span>
-                        <button @click="trailLocation = 'Sycamore Canyon, Point Mugu State Park'; getAiRecommendation();" class="px-3 py-1 bg-trail-950 hover:bg-trail-800 border border-trail-800 rounded-lg text-xs text-trail-300 transition">Sycamore Canyon</button>
-                        <button @click="trailLocation = 'Wendy Trailhead / Satwiwa, Santa Monica Mountains'; getAiRecommendation();" class="px-3 py-1 bg-trail-950 hover:bg-trail-800 border border-trail-800 rounded-lg text-xs text-trail-300 transition">Wendy Trailhead</button>
-                        <button @click="trailLocation = 'Whole Enchilada, Moab Utah'; getAiRecommendation();" class="px-3 py-1 bg-trail-950 hover:bg-trail-800 border border-trail-800 rounded-lg text-xs text-trail-300 transition">Whole Enchilada, Moab</button>
-                        <button @click="trailLocation = 'Whistler Mountain Bike Park, BC'; getAiRecommendation();" class="px-3 py-1 bg-trail-950 hover:bg-trail-800 border border-trail-800 rounded-lg text-xs text-trail-300 transition">Whistler Bike Park</button>
+                <!-- Bike Image Preview -->
+                <div class="mb-5 rounded-xl overflow-hidden bg-dark-900 border border-gray-800 relative group h-44 flex items-center justify-center">
+                    <img :src="bikeImage" alt="Mountain Bike" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-0 bg-gradient-to-t from-dark-900/90 via-dark-900/20 to-transparent flex items-end p-3">
+                        <div>
+                            <span class="text-xs uppercase tracking-wider font-bold text-orange-400" x-text="bike.brand || 'Custom Build'"></span>
+                            <h3 class="text-sm font-bold text-white" x-text="bike.model || 'Enter your bike model'"></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Fields -->
+                <div class="space-y-4 text-xs">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Brand</label>
+                            <input type="text" x-model="bike.brand" @input="saveToStorage()" placeholder="e.g., Intense, Trek" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Model / Year</label>
+                            <input type="text" x-model="bike.model" @input="saveToStorage()" placeholder="e.g., Tazer Mullet e-MTB" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Rider Weight in Full Gear</label>
+                            <div class="flex">
+                                <input type="number" x-model="bike.riderWeight" @input="saveToStorage()" placeholder="185" class="w-full bg-dark-900 border border-gray-700 rounded-l-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                                <span class="bg-dark-700 border border-l-0 border-gray-700 px-3 py-2 rounded-r-lg text-gray-400 flex items-center font-medium" x-text="weightUnit"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Weight Unit</label>
+                            <select x-model="weightUnit" @change="saveToStorage()" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                                <option value="lbs">Pounds (lbs)</option>
+                                <option value="kg">Kilograms (kg)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Front Fork</label>
+                            <input type="text" x-model="bike.fork" @input="saveToStorage()" placeholder="e.g., Fox 38 Factory 170mm" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Rear Shock</label>
+                            <input type="text" x-model="bike.shock" @input="saveToStorage()" placeholder="e.g., Fox Float X2" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Tires & Wheels</label>
+                            <input type="text" x-model="bike.tires" @input="saveToStorage()" placeholder="e.g., Schwalbe Radial" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-1 font-medium">Brakes</label>
+                            <input type="text" x-model="bike.brakes" @input="saveToStorage()" placeholder="e.g., Shimano Saint" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 mb-1 font-medium">Drivetrain</label>
+                        <input type="text" x-model="bike.drivetrain" @input="saveToStorage()" placeholder="e.g., SRAM XX Eagle" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-400 mb-1 font-medium">Current Trail Location</label>
+                        <div class="flex space-x-2">
+                            <input type="text" x-model="trailLocation" placeholder="e.g., Sycamore Canyon / Ventura County" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 focus:outline-none">
+                            <button @click="detectLocation()" title="Use Current GPS Location" class="bg-dark-700 hover:bg-dark-600 text-orange-400 px-3 py-2 rounded-lg border border-gray-700 transition flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-location-crosshairs"></i>
+                            </button>
+                            <button @click="fetchAiRecommendations()" :disabled="loading" class="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg transition flex items-center space-x-1 shrink-0">
+                                <i class="fa-solid fa-wand-magic-sparkles" :class="{'fa-spin': loading}"></i>
+                                <span x-text="loading ? 'Tuning...' : 'Tune Ride'"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- AI Recommendation Results Area -->
-            <template x-if="aiResult">
-                <div class="space-y-6">
-                    
-                    <!-- Top AI Summary Banner -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-trail-accent/5 rounded-full blur-3xl pointer-events-none"></div>
-                        <div class="flex items-center space-x-3 mb-3">
-                            <div class="w-8 h-8 rounded-lg bg-trail-accent/20 flex items-center justify-center text-trail-accent">
-                                <i class="fa-solid fa-brain"></i>
+        <!-- Right Column: AI Tuning Results & Interactive Chat (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6 flex flex-col">
+            
+            <!-- AI Recommendation Card -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-orange-400 flex items-center space-x-2">
+                        <i class="fa-solid fa-robot"></i>
+                        <span x-text="'Detailed Setup Guide for ' + (trailLocation || 'Selected Trail')"></span>
+                    </h2>
+                    <span class="text-xs bg-orange-500/10 text-orange-400 px-2.5 py-1 rounded-md border border-orange-500/20 font-medium">Gemini AI Powered</span>
+                </div>
+
+                <div class="flex-1 min-h-[300px] bg-dark-900 rounded-xl p-4 border border-gray-800 overflow-y-auto text-sm text-gray-300 leading-relaxed">
+                    <template x-if="!recommendations && !loading">
+                        <div class="h-full flex flex-col items-center justify-center text-center text-gray-500 space-y-3 py-16">
+                            <div class="w-12 h-12 rounded-full bg-dark-800 flex items-center justify-center text-orange-400 text-lg border border-gray-800">
+                                <i class="fa-solid fa-compass"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-bold text-white" x-text="'AI Trail Tune for: ' + trailLocation"></h3>
-                                <p class="text-xs text-trail-400" x-text="'Optimized for ' + activeBike.name + ' (' + activeBike.riderWeight + ' ' + activeBike.weightUnit + ' rider in full gear)'"></p>
+                                <p class="font-medium text-gray-400">Comprehensive Setup Guide Ready</p>
+                                <p class="text-xs mt-1">Enter your bike specs, click <strong class="text-orange-400">"Tune Ride"</strong> or use your GPS location.</p>
                             </div>
                         </div>
-                        <div class="mt-4 p-4 rounded-xl bg-trail-950/80 border border-trail-800 text-trail-200 text-sm leading-relaxed" x-html="formatMarkdown(aiResult.summary)"></div>
-                    </div>
+                    </template>
 
-                    <!-- Recommended Trails List in this Network -->
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg">
-                        <h3 class="text-base font-bold text-white mb-4 flex items-center space-x-2">
-                            <i class="fa-solid fa-route text-trail-accent"></i>
-                            <span>Recommended Specific Trails in this Network</span>
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <template x-for="trail in aiResult.trails">
-                                <div class="bg-trail-950 border border-trail-800 rounded-xl p-4 flex flex-col justify-between">
-                                    <div>
-                                        <div class="flex items-center justify-between mb-2">
-                                            <span class="font-semibold text-white text-sm" x-text="trail.name"></span>
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider" 
-                                                  :class="trail.difficulty.includes('Black') ? 'bg-red-500/20 text-red-400 border border-red-500/30' : (trail.difficulty.includes('Blue') ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30')" 
-                                                  x-text="trail.difficulty"></span>
-                                        </div>
-                                        <p class="text-xs text-trail-300 mb-3" x-text="trail.description"></p>
-                                    </div>
-                                    <div class="flex items-center justify-between text-[11px] text-trail-400 pt-3 border-t border-trail-800/60">
-                                        <span><i class="fa-solid fa-arrows-up-down-left-right mr-1"></i> <span x-text="trail.distance"></span></span>
-                                        <span><i class="fa-solid fa-mountain mr-1"></i> <span x-text="trail.type"></span></span>
-                                    </div>
-                                </div>
-                            </template>
+                    <template x-if="loading">
+                        <div class="h-full flex flex-col items-center justify-center text-center space-y-3 py-16">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-orange-500"></i>
+                            <p class="text-xs text-gray-400 font-medium animate-pulse">Analyzing trail terrain, calculating exact suspension pressures, clickers, and volume spacers...</p>
                         </div>
-                    </div>
+                    </template>
 
-                    <!-- Suspension & Tire Tuning Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- Custom Suspension Tuning Recs -->
-                        <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg">
-                            <h3 class="text-base font-bold text-white mb-4 flex items-center space-x-2">
-                                <i class="fa-solid fa-sliders text-trail-accent"></i>
-                                <span>Suggested Suspension Tune for this Terrain</span>
-                            </h3>
-                            <div class="space-y-4">
-                                <div class="p-3.5 rounded-xl bg-trail-950 border border-trail-800">
-                                    <div class="text-xs font-semibold text-trail-accent mb-1">FRONT FORK ADJUSTMENT</div>
-                                    <p class="text-xs text-trail-200 leading-relaxed" x-text="aiResult.suspension.forkAdvice"></p>
-                                </div>
-                                <div class="p-3.5 rounded-xl bg-trail-950 border border-trail-800">
-                                    <div class="text-xs font-semibold text-trail-accent mb-1">REAR SHOCK ADJUSTMENT</div>
-                                    <p class="text-xs text-trail-200 leading-relaxed" x-text="aiResult.suspension.shockAdvice"></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tire Pressure & Key Setup Tips -->
-                        <div class="bg-trail-900 border border-trail-800 rounded-2xl p-6 shadow-lg">
-                            <h3 class="text-base font-bold text-white mb-4 flex items-center space-x-2">
-                                <i class="fa-solid fa-dharmachakra text-trail-accent"></i>
-                                <span>Tire Pressure & Pro Setup Tips</span>
-                            </h3>
-                            <div class="space-y-4">
-                                <div class="p-3.5 rounded-xl bg-trail-950 border border-trail-800">
-                                    <div class="text-xs font-semibold text-trail-accent mb-1">RECOMMENDED TIRE PRESSURES</div>
-                                    <div class="grid grid-cols-2 gap-2 mt-2">
-                                        <div class="bg-trail-900 p-2 rounded-lg text-center">
-                                            <div class="text-[10px] text-trail-400">Front Pressure</div>
-                                            <div class="text-sm font-bold text-white" x-text="aiResult.tires.frontPSI"></div>
-                                        </div>
-                                        <div class="bg-trail-900 p-2 rounded-lg text-center">
-                                            <div class="text-[10px] text-trail-400">Rear Pressure</div>
-                                            <div class="text-sm font-bold text-white" x-text="aiResult.tires.rearPSI"></div>
-                                        </div>
-                                    </div>
-                                    <p class="text-[11px] text-trail-300 mt-2" x-text="aiResult.tires.note"></p>
-                                </div>
-                                <div class="p-3.5 rounded-xl bg-trail-950 border border-trail-800">
-                                    <div class="text-xs font-semibold text-trail-accent mb-1">KEY RIDE TIPS</div>
-                                    <p class="text-xs text-trail-200 leading-relaxed" x-text="aiResult.tips"></p>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
+                    <template x-if="recommendations && !loading">
+                        <div class="space-y-4 prose prose-invert max-w-none text-xs sm:text-sm" x-html="renderedRecommendations"></div>
+                    </template>
                 </div>
-            </template>
-
-            <!-- Loading Skeleton -->
-            <template x-if="aiLoading">
-                <div class="space-y-6 animate-pulse">
-                    <div class="bg-trail-900 border border-trail-800 rounded-2xl p-8 h-48 flex flex-col justify-center items-center text-center">
-                        <div class="w-12 h-12 rounded-full bg-trail-accent/20 flex items-center justify-center text-trail-accent mb-4">
-                            <i class="fa-solid fa-circle-notch fa-spin text-xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-white">Gemini AI is analyzing trail conditions & suspension kinematics...</h3>
-                        <p class="text-xs text-trail-400 mt-1">Calculating optimal rebound, compression, and tire pressures for your <span x-text="activeBike.name"></span>.</p>
-                    </div>
-                </div>
-            </template>
-
-        </div>
-
-        <!-- TAB 3: AI MECHANIC CHAT -->
-        <div x-show="currentTab === 'aiChat'" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-2" class="h-[calc(100vh-12rem)] flex flex-col bg-trail-900 border border-trail-800 rounded-2xl shadow-xl overflow-hidden">
-            
-            <!-- Chat Header -->
-            <div class="p-4 bg-trail-800/60 border-b border-trail-800 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-xl bg-trail-accent/20 flex items-center justify-center text-trail-accent">
-                        <i class="fa-solid fa-robot"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-white">TrailTuned AI Mechanic Assistant</h3>
-                        <p class="text-[11px] text-trail-400">Ask anything about suspension tuning, tire inserts, bleeding brakes, or setup.</p>
-                    </div>
-                </div>
-                <button @click="chatMessages = [{role: 'assistant', text: 'Hey there! I am your AI suspension tuner and bike mechanic. How can I help you dial in your setup today?'}]" class="text-xs text-trail-400 hover:text-white px-3 py-1.5 rounded-lg bg-trail-900 border border-trail-800 transition">
-                    Clear Chat
-                </button>
             </div>
 
-            <!-- Chat Messages Scroll Area -->
-            <div class="flex-1 p-4 overflow-y-auto space-y-4" id="chat-container">
-                <template x-for="msg in chatMessages" :key="msg.text">
-                    <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                        <div :class="msg.role === 'user' ? 'bg-trail-accent text-white rounded-2xl rounded-tr-sm' : 'bg-trail-950 text-trail-100 border border-trail-800 rounded-2xl rounded-tl-sm'" class="max-w-xl px-4 py-3 text-sm shadow">
-                            <div class="font-semibold text-[11px] mb-1 opacity-75" x-text="msg.role === 'user' ? 'You' : 'TrailTuned AI'"></div>
-                            <div class="leading-relaxed" x-html="formatMarkdown(msg.text)"></div>
-                        </div>
+            <!-- AI Mechanic Chat -->
+            <div class="bg-dark-800 border border-gray-800 rounded-2xl p-5 shadow-xl">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-orange-400 mb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Trailside AI Mechanic</span>
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="max-h-36 overflow-y-auto space-y-2 pr-1 text-xs" x-ref="chatBox">
+                        <template x-for="msg in chatHistory">
+                            <div :class="msg.role === 'user' ? 'text-right' : 'text-left'">
+                                <div :class="msg.role === 'user' ? 'bg-orange-600 text-white ml-auto' : 'bg-dark-700 text-gray-200 mr-auto'" class="inline-block px-3 py-2 rounded-xl max-w-[85%] text-left">
+                                    <p x-text="msg.text"></p>
+                                </div>
+                            </div>
+                        </template>
                     </div>
-                </template>
-                <template x-if="chatLoading">
-                    <div class="flex justify-start">
-                        <div class="bg-trail-950 border border-trail-800 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-trail-400 flex items-center space-x-2">
-                            <i class="fa-solid fa-circle-notch fa-spin text-trail-accent"></i>
-                            <span>Mechanic is typing...</span>
-                        </div>
-                    </div>
-                </template>
-            </div>
 
-            <!-- Chat Input Bar -->
-            <div class="p-3 bg-trail-900 border-t border-trail-800">
-                <form @submit.prevent="sendChatMessage()" class="flex space-x-2">
-                    <input type="text" x-model="chatInput" class="flex-1 bg-trail-950 border border-trail-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-trail-accent transition" placeholder="Ask e.g., 'Should I add a volume token to my FOX 38 for rocky drops?'">
-                    <button type="submit" :disabled="chatLoading || !chatInput.trim()" class="px-5 py-3 bg-trail-accent hover:bg-orange-600 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-trail-accent/20 flex items-center space-x-2">
-                        <span>Send</span>
-                        <i class="fa-solid fa-paper-plane text-xs"></i>
-                    </button>
-                </form>
+                    <div class="flex space-x-2 pt-2 border-t border-gray-800">
+                        <input type="text" x-model="chatInput" @keydown.enter="sendChatMessage()" placeholder="Ask about high-speed compression, rebound damping, or tire PSI..." class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+                        <button @click="sendChatMessage()" :disabled="chatLoading" class="bg-dark-700 hover:bg-dark-600 text-orange-400 px-4 py-2 rounded-lg text-xs font-semibold border border-gray-700 transition flex items-center space-x-1 shrink-0">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </div>
-
     </main>
 
+    <!-- Settings Modal -->
+    <div x-show="showSettings" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" x-cloak>
+        <div class="bg-dark-800 border border-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+                <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-orange-400"></i>
+                    <span>Gemini API Key Settings</span>
+                </h3>
+                <button @click="showSettings = false" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">
+                TrailTuned AI uses Google AI Studio's free Gemini API. Get a free API key at <a href="https://aistudio.google.com/apikey" target="_blank" class="text-orange-400 underline font-medium">aistudio.google.com/apikey</a>. Saved securely in your browser's localStorage.
+            </p>
+            <div>
+                <label class="block text-xs font-medium text-gray-300 mb-1">API Key</label>
+                <input type="password" x-model="apiKey" placeholder="AIzaSy..." class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:border-orange-500 focus:outline-none">
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button @click="showSettings = false" class="bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">Save Key</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="mt-auto border-t border-trail-900 bg-trail-950 py-4 text-center text-xs text-trail-400">
-        <p>TrailTuned AI &copy; 2026 &bull; Advanced Mountain Bike Setup & Trail Recommendations powered by Gemini AI</p>
+    <footer class="border-t border-gray-800 py-4 text-center text-xs text-gray-500">
+        <p>TrailTuned AI &copy; 2026 &bull; Progressive Web App</p>
     </footer>
 
-    <!-- Application Logic -->
+    <!-- Application Script with Gemini 3.8 Flash Endpoint -->
     <script>
-        function appData() {
+        function trailApp() {
             return {
-                currentTab: 'garage',
-                aiLoading: false,
+                apiKey: localStorage.getItem('trailtuned_gemini_key') || '',
+                showSettings: false,
+                selectedPreset: '',
+                weightUnit: 'lbs',
+                trailLocation: 'Sycamore Canyon, Ventura County',
+                loading: false,
                 chatLoading: false,
-                trailLocation: '',
-                aiResult: null,
+                recommendations: '',
+                deferredPrompt: null,
+                bikeImage: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?auto=format&fit=crop&w=800&q=80',
+                bike: {
+                    brand: 'Intense',
+                    model: '2027 Tazer Mullet e-MTB',
+                    riderWeight: '185',
+                    fork: 'Fox 38 Factory E-Optimized 170mm',
+                    shock: 'Fox Float X2 Factory',
+                    tires: 'Schwalbe Albert Radial (Front) / Tacky Chan Radial (Rear)',
+                    brakes: 'Shimano Saint 4-Piston',
+                    drivetrain: 'SRAM XX Eagle Transmission'
+                },
                 chatInput: '',
-                chatMessages: [
-                    { role: 'assistant', text: 'Hey there! I am your AI suspension tuner and bike mechanic. Ask me anything about rebound settings, tire pressures, or drop tuning for your rig.' }
+                chatHistory: [
+                    { role: 'assistant', text: 'Hey! I am your Trailside AI Mechanic. Ask me anything about suspension sag, rebound damping, or component setup.' }
                 ],
-                activeBikeId: 1,
-                bikes: [
-                    {
-                        id: 1,
-                        name: 'Intense Tazer e-MTB',
-                        category: 'e-MTB',
-                        riderWeight: 185,
-                        weightUnit: 'lbs',
-                        ridingStyle: 'Balanced',
-                        fork: {
-                            model: 'FOX 38 Factory E-Bike+, 170mm',
-                            pressure: '92 PSI',
-                            tokens: '2 tokens',
-                            rebound: '7 clicks out',
-                            compression: 'H: 4, L: 8'
-                        },
-                        shock: {
-                            model: 'FOX Float X2 Factory, 205x65',
-                            pressure: '195 PSI',
-                            sag: '30%',
-                            rebound: '9 clicks out',
-                            compression: 'H: 3, L: 6'
-                        },
-                        wheels: 'Industry Nine Enduro 305 (29" F / 27.5" R)',
-                        tires: 'Schwalbe Albert Radial F / Tacky Chan R',
-                        frontTirePressure: '23 PSI',
-                        rearTirePressure: '26 PSI',
-                        brakes: 'Shimano XTR 4-Piston, 203mm rotors',
-                        drivetrain: 'SRAM XX Eagle AXS Transmission, CushCore'
+                presets: {
+                    tazer: {
+                        brand: 'Intense',
+                        model: '2027 Tazer Mullet e-MTB',
+                        fork: 'Fox 38 Factory E-Optimized 170mm',
+                        shock: 'Fox Float X2 Factory',
+                        tires: 'Schwalbe Albert Radial (Front) / Tacky Chan Radial (Rear)',
+                        brakes: 'Shimano Saint 4-Piston',
+                        drivetrain: 'SRAM XX Eagle Transmission',
+                        image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?auto=format&fit=crop&w=800&q=80'
                     },
-                    {
-                        id: 2,
-                        name: 'Specialized Kenevo SL',
-                        category: 'Enduro',
-                        riderWeight: 185,
-                        weightUnit: 'lbs',
-                        ridingStyle: 'Plush / DH',
-                        fork: {
-                            model: 'Öhlins RXF38 m.2, 170mm',
-                            pressure: '95 PSI',
-                            tokens: '2 tokens',
-                            rebound: '6 clicks out',
-                            compression: '3 clicks open'
-                        },
-                        shock: {
-                            model: 'Öhlins TTX22m Coil, 500lb spring',
-                            pressure: '500 lb spring',
-                            sag: '32%',
-                            rebound: '8 clicks out',
-                            compression: '2 clicks open'
-                        },
-                        wheels: 'Roval Traverse HD Carbon 29"',
+                    kenevo: {
+                        brand: 'Specialized',
+                        model: 'Kenevo SL Expert',
+                        fork: 'Fox 38 Float Performance Elite 170mm',
+                        shock: 'Fox Float X2 Performance',
                         tires: 'Specialized Butcher Grid Trail T9',
-                        frontTirePressure: '22 PSI',
-                        rearTirePressure: '25 PSI',
-                        brakes: 'SRAM Code RSC, 220/200mm rotors',
-                        drivetrain: 'SRAM X01 Eagle AXS'
+                        brakes: 'SRAM Code RS',
+                        drivetrain: 'SRAM GX Eagle AXS',
+                        image: 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=800&q=80'
                     },
-                    {
-                        id: 3,
-                        name: 'Trek Fuel EX 9.8',
-                        category: 'Trail',
-                        riderWeight: 175,
-                        weightUnit: 'lbs',
-                        ridingStyle: 'Balanced',
-                        fork: {
-                            model: 'RockShox Lyrik Ultimate, 150mm',
-                            pressure: '82 PSI',
-                            tokens: '1 token',
-                            rebound: '9 clicks out',
-                            compression: 'Mid'
-                        },
-                        shock: {
-                            model: 'RockShox Super Deluxe Ultimate',
-                            pressure: '175 PSI',
-                            sag: '28%',
-                            rebound: '10 clicks out',
-                            compression: 'Open'
-                        },
-                        wheels: 'Bontrager Line Elite 30 Carbon',
-                        tires: 'Bontrager SE5 / SE4 Team Issue',
-                        frontTirePressure: '24 PSI',
-                        rearTirePressure: '27 PSI',
-                        brakes: 'SRAM G2 RSC, 200/180mm',
-                        drivetrain: 'SRAM GX Eagle Lunar 12-speed'
+                    fuel: {
+                        brand: 'Trek',
+                        model: 'Fuel EX 9.8 Gen 6',
+                        fork: 'Fox Performance 36 150mm',
+                        shock: 'Fox Float X Performance',
+                        tires: 'Bontrager Sainte-Anne RSL SE',
+                        brakes: 'Shimano Deore XT M8120',
+                        drivetrain: 'SRAM GX Eagle Transmission',
+                        image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80'
+                    },
+                    tracer: {
+                        brand: 'Intense',
+                        model: 'Tracer Enduro',
+                        fork: 'Ohlins RXF38 m.2 170mm',
+                        shock: 'Ohlins TTX22m Air',
+                        tires: 'Maxxis Assegai / Minion DHR II',
+                        brakes: 'TRP DHR Evo',
+                        drivetrain: 'Shimano XTR M9100',
+                        image: 'https://images.unsplash.com/photo-1511994298241-608e28f14fde?auto=format&fit=crop&w=800&q=80'
                     }
-                ],
-                get activeBike() {
-                    return this.bikes.find(b => b.id === this.activeBikeId) || this.bikes[0];
                 },
-                initApp() {
-                    const saved = localStorage.getItem('trailtuned_bikes');
+                init() {
+                    const saved = localStorage.getItem('trailtuned_bike');
                     if (saved) {
-                        try {
-                            this.bikes = JSON.parse(saved);
-                        } catch(e) { console.error(e); }
+                        try { this.bike = JSON.parse(saved); } catch(e) {}
                     }
+                    const savedLoc = localStorage.getItem('trailtuned_location');
+                    if (savedLoc) this.trailLocation = savedLoc;
+                    const savedRecs = localStorage.getItem('trailtuned_recs');
+                    if (savedRecs) this.recommendations = savedRecs;
+
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        this.deferredPrompt = e;
+                    });
+
+                    this.$watch('apiKey', val => localStorage.setItem('trailtuned_gemini_key', val));
                 },
-                saveBikes() {
-                    localStorage.setItem('trailtuned_bikes', JSON.stringify(this.bikes));
-                    alert('Bike setup saved successfully to local storage!');
+                saveToStorage() {
+                    localStorage.setItem('trailtuned_bike', JSON.stringify(this.bike));
+                    localStorage.setItem('trailtuned_location', this.trailLocation);
                 },
-                switchBike(id) {
-                    this.activeBikeId = id;
+                loadPreset(key) {
+                    if (!key || !this.presets[key]) return;
+                    const p = this.presets[key];
+                    this.bike.brand = p.brand;
+                    this.bike.model = p.model;
+                    this.bike.fork = p.fork;
+                    this.bike.shock = p.shock;
+                    this.bike.tires = p.tires;
+                    this.bike.brakes = p.brakes;
+                    this.bike.drivetrain = p.drivetrain;
+                    this.bikeImage = p.image;
+                    this.saveToStorage();
                 },
-                addNewBike() {
-                    const newId = Date.now();
-                    const newBike = {
-                        id: newId,
-                        name: 'Custom Trail Rig',
-                        category: 'Trail',
-                        riderWeight: 170,
-                        weightUnit: 'lbs',
-                        ridingStyle: 'Balanced',
-                        fork: { model: 'FOX 36 Factory', pressure: '80 PSI', tokens: '1 token', rebound: '8 out', compression: 'L: 6' },
-                        shock: { model: 'FOX Float DPS', pressure: '165 PSI', sag: '25%', rebound: '9 out', compression: 'Medium' },
-                        wheels: 'DT Swiss EX 1700 29"',
-                        tires: 'Maxxis Minion DHF / DHR II',
-                        frontTirePressure: '24 PSI',
-                        rearTirePressure: '27 PSI',
-                        brakes: 'Shimano XT 4-Piston',
-                        drivetrain: 'Shimano XT M8100 12-speed'
+                resetForm() {
+                    localStorage.removeItem('trailtuned_bike');
+                    localStorage.removeItem('trailtuned_recs');
+                    this.recommendations = '';
+                    this.selectedPreset = '';
+                    this.bike = {
+                        brand: '',
+                        model: '',
+                        riderWeight: '185',
+                        fork: '',
+                        shock: '',
+                        tires: '',
+                        brakes: '',
+                        drivetrain: ''
                     };
-                    this.bikes.push(newBike);
-                    this.activeBikeId = newId;
                 },
-                applyPreset(modelName) {
-                    const presets = {
-                        'Intense Tazer e-MTB': {
-                            name: 'Intense Tazer e-MTB',
-                            category: 'e-MTB',
-                            fork: { model: 'FOX 38 Factory E-Bike+, 170mm', pressure: '92 PSI', tokens: '2 tokens', rebound: '7 clicks out', compression: 'H: 4, L: 8' },
-                            shock: { model: 'FOX Float X2 Factory, 205x65', pressure: '195 PSI', sag: '30%', rebound: '9 clicks out', compression: 'H: 3, L: 6' },
-                            wheels: 'Industry Nine Enduro 305 (29" F / 27.5" R)',
-                            tires: 'Schwalbe Albert Radial F / Tacky Chan R',
-                            brakes: 'Shimano XTR 4-Piston, 203mm rotors',
-                            drivetrain: 'SRAM XX Eagle AXS Transmission'
-                        },
-                        'Specialized Kenevo SL': {
-                            name: 'Specialized Kenevo SL',
-                            category: 'Enduro',
-                            fork: { model: 'Öhlins RXF38 m.2, 170mm', pressure: '95 PSI', tokens: '2 tokens', rebound: '6 clicks out', compression: '3 clicks open' },
-                            shock: { model: 'Öhlins TTX22m Coil, 500lb', pressure: '500 lb spring', sag: '32%', rebound: '8 clicks out', compression: '2 open' },
-                            wheels: 'Roval Traverse HD Carbon 29"',
-                            tires: 'Specialized Butcher Grid Trail T9',
-                            brakes: 'SRAM Code RSC, 220/200mm',
-                            drivetrain: 'SRAM X01 Eagle AXS'
-                        },
-                        'Trek Fuel EX 9.8': {
-                            name: 'Trek Fuel EX 9.8',
-                            category: 'Trail',
-                            fork: { model: 'RockShox Lyrik Ultimate, 150mm', pressure: '82 PSI', tokens: '1 token', rebound: '9 clicks out', compression: 'Mid' },
-                            shock: { model: 'RockShox Super Deluxe Ultimate', pressure: '175 PSI', sag: '28%', rebound: '10 clicks out', compression: 'Open' },
-                            wheels: 'Bontrager Line Elite 30 Carbon',
-                            tires: 'Bontrager SE5 / SE4 Team Issue',
-                            brakes: 'SRAM G2 RSC, 200/180mm',
-                            drivetrain: 'SRAM GX Eagle Lunar 12-speed'
-                        },
-                        'Intense 951 Trail': {
-                            name: 'Intense 951 Trail',
-                            category: 'Trail',
-                            fork: { model: 'DVO Diamond D1, 150mm', pressure: '85 PSI', tokens: '1 token', rebound: '10 out', compression: 'Mid' },
-                            shock: { model: 'DVO Topaz T3 Air', pressure: '180 PSI', sag: '27%', rebound: '9 out', compression: 'Open' },
-                            wheels: 'WTB Speedterra 29"',
-                            tires: 'Maxxis Assegai / Dissector EXO+',
-                            brakes: 'TRP Slate Evo 4-Piston',
-                            drivetrain: 'SRAM NX Eagle 12-speed'
-                        }
-                    };
-                    const p = presets[modelName];
-                    if (p) {
-                        this.activeBike.name = p.name;
-                        this.activeBike.category = p.category;
-                        this.activeBike.fork = { ...p.fork };
-                        this.activeBike.shock = { ...p.shock };
-                        this.activeBike.wheels = p.wheels;
-                        this.activeBike.tires = p.tires;
-                        this.activeBike.brakes = p.brakes;
-                        this.activeBike.drivetrain = p.drivetrain;
-                        this.saveBikes();
-                    }
-                },
-                getBikeImage() {
-                    const cat = this.activeBike.category;
-                    if (cat === 'e-MTB') return 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?auto=format&fit=crop&w=800&q=80';
-                    if (cat === 'Enduro' || cat === 'Downhill') return 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=800&q=80';
-                    return 'https://images.unsplash.com/photo-1511994298241-608e28f14fde?auto=format&fit=crop&w=800&q=80';
-                },
-                formatMarkdown(text) {
-                    if (!text) return '';
-                    return text
-                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-                        .replace(/\*(.*?)\*/g, '<em class="text-trail-300">$1</em>')
-                        .replace(/\n/g, '<br>');
-                },
-                async getAiRecommendation() {
-                    if (!this.trailLocation.trim()) {
-                        alert('Please enter a trail location or trail system name.');
+                detectLocation() {
+                    if (!navigator.geolocation) {
+                        alert("Geolocation is not supported by your browser");
                         return;
                     }
-                    this.aiLoading = true;
-                    this.aiResult = null;
-
-                    const systemPrompt = "You are TrailTuned AI, an expert mountain bike suspension tuner, pro mechanic, and trail guide. Return ONLY a valid JSON object with the following structure: {\"summary\": \"...\", \"trails\": [{\"name\": \"...\", \"difficulty\": \"...\", \"distance\": \"...\", \"type\": \"...\", \"description\": \"...\"}], \"suspension\": {\"forkAdvice\": \"...\", \"shockAdvice\": \"...\"}, \"tires\": {\"frontPSI\": \"...\", \"rearPSI\": \"...\", \"note\": \"...\"}, \"tips\": \"...\"}";
+                    this.trailLocation = "Locating via GPS...";
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude.toFixed(4);
+                            const lon = position.coords.longitude.toFixed(4);
+                            this.trailLocation = `GPS Coordinates: ${lat}, ${lon}`;
+                            this.saveToStorage();
+                        },
+                        () => {
+                            this.trailLocation = "Unable to retrieve location";
+                        }
+                    );
+                },
+                async installPwa() {
+                    if (!this.deferredPrompt) return;
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        this.deferredPrompt = null;
+                    }
+                },
+                get renderedRecommendations() {
+                    if (!this.recommendations) return '';
+                    return this.recommendations
+                        .replace(/### (.*?)$/gm, '<h4 class="text-orange-400 font-bold text-base mt-4 mb-2">$1</h4>')
+                        .replace(/## (.*?)$/gm, '<h3 class="text-orange-400 font-bold text-lg mt-5 mb-3">$1</h3>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+                        .replace(/- (.*?)$/gm, '<li class="ml-4 list-disc text-gray-300 my-1">$1</li>');
+                },
+                async callGeminiApi(promptText) {
+                    // Configured to use the current free-tier stable model: gemini-3.8-flash
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${this.apiKey}`;
                     
-                    const userQuery = `Location: ${this.trailLocation}. Bike: ${this.activeBike.name} (${this.activeBike.category}), Rider Weight: ${this.activeBike.riderWeight} ${this.activeBike.weightUnit} in full gear. Current Fork: ${this.activeBike.fork.model}, Shock: ${this.activeBike.shock.model}, Riding Style: ${this.activeBike.ridingStyle}. Provide specific trail recommendations for this location, tuned suspension adjustments, tire pressures, and pro tips.`;
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                    });
+                    
+                    const data = await response.json();
+                    if (!response.ok) {
+                        const errMsg = data.error && data.error.message ? data.error.message : `HTTP Error ${response.status}`;
+                        throw new Error(errMsg);
+                    }
+                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        return data.candidates[0].content.parts[0].text;
+                    }
+                    throw new Error("Invalid response format received from Gemini API.");
+                },
+                async fetchAiRecommendations() {
+                    if (!this.apiKey) {
+                        this.showSettings = true;
+                        return;
+                    }
+                    this.loading = true;
+                    const prompt = `You are an elite professional mountain bike race mechanic and suspension tuning expert. Provide an in-depth, highly comprehensive, professional setup and trail advisory guide for the following rider and location:
+
+- Bike Build: ${this.bike.brand} ${this.bike.model}
+- Rider Weight in Full Gear: ${this.bike.riderWeight} ${this.weightUnit}
+- Front Suspension: ${this.bike.fork}
+- Rear Suspension: ${this.bike.shock}
+- Tires & Wheels: ${this.bike.tires}
+- Brakes: ${this.bike.brakes}
+- Drivetrain: ${this.bike.drivetrain}
+- Target Trail / Location: ${this.trailLocation}
+
+Please structure your detailed guide into the following comprehensive sections:
+1. ### Trail Overview & Terrain Analysis (Detailed breakdown of soil composition, rock/root density, technical features, and speed profiles at this specific location)
+2. ### Front Fork Precision Setup (Exact air pressure/PSI, recommended volume spacer token count, high/low speed compression clicks from fully closed, and rebound damping settings scaled precisely for ${this.bike.riderWeight} ${this.weightUnit})
+3. ### Rear Shock Tuning & Sag (Exact air pressure, volume band configuration, low-speed and high-speed compression settings, and rebound clicker adjustments)
+4. ### Tire Pressure & Cockpit Optimization (Exact front and rear tire PSI recommendations, casing notes, brake lever reach, and cockpit ergonomics)
+5. ### Pre-Ride Inspection & Pro Tips (Essential mechanical checks and line-choice strategies for this terrain)`;
 
                     try {
-                        const apiKey = "";
-                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-                        
-                        const payload = {
-                            contents: [{ parts: [{ text: userQuery }] }],
-                            systemInstruction: { parts: [{ text: systemPrompt }] },
-                            generationConfig: { responseMimeType: "application/json" }
-                        };
-
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const result = await response.json();
-                        const candidate = result.candidates?.[0];
-                        if (candidate && candidate.content?.parts?.[0]?.text) {
-                            const jsonText = candidate.content.parts[0].text;
-                            this.aiResult = JSON.parse(jsonText);
-                        } else {
-                            throw new Error('Invalid response structure');
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        // Fallback simulated smart response if API fails
-                        this.aiResult = {
-                            summary: `For **${this.trailLocation}**, your **${this.activeBike.name}** is well-suited. Given your **${this.activeBike.riderWeight} ${this.activeBike.weightUnit}** weight in gear, we have optimized your suspension and tire pressures for maximum traction and bottom-out control over technical terrain.`,
-                            trails: [
-                                { name: "Canyon Ridge Traverse", difficulty: "Blue Intermediate", distance: "8.4 miles", type: "Singletrack / Flow", description: "Rolling terrain with fast sweeping berms and occasional rock gardens." },
-                                { name: "Widowmaker Descent", difficulty: "Black Diamond", distance: "3.2 miles", type: "Technical Descend", description: "Steep rocky chutes, ledge drops, and loose baby-head rocks requiring precise suspension recovery." },
-                                { name: "Satwiwa Climbers Loop", difficulty: "Green / Blue", distance: "5.1 miles", type: "Climb & Vista", description: "Steady fire road and singletrack climb with rewarding panoramic views." }
-                            ],
-                            suspension: {
-                                forkAdvice: `Increase high-speed compression by 1 click to prevent brake dive on steep descents. For your ${this.activeBike.riderWeight} ${this.activeBike.weightUnit} weight, ensure fork pressure is set for ~20% sag.`,
-                                shockAdvice: `Add 2 PSI to rear shock to maintain ride height through chatter and G-outs. Keep rebound slightly slower (8-9 clicks out) to absorb square-edge hits.`
-                            },
-                            tires: {
-                                frontPSI: "23 PSI",
-                                rearPSI: "26 PSI",
-                                note: "Slightly lower front pressure gives optimal radial casing compliance on loose over hardpack corners."
-                            },
-                            tips: "Watch out for loose kitty litter over hardpack in exposed turns. Keep your weight centered and let your active suspension work through high-frequency chatter."
-                        };
+                        const text = await this.callGeminiApi(prompt);
+                        this.recommendations = text;
+                        localStorage.setItem('trailtuned_recs', this.recommendations);
+                    } catch (err) {
+                        this.recommendations = `### API Connection Error\n- **Reason:** ${err.message}\n- **Fix:** Please check that your Gemini API key is correct in settings (get a free one at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)).`;
                     } finally {
-                        this.aiLoading = false;
+                        this.loading = false;
                     }
                 },
                 async sendChatMessage() {
-                    if (!this.chatInput.trim() || this.chatLoading) return;
-                    const userText = this.chatInput;
-                    this.chatMessages.push({ role: 'user', text: userText });
+                    if (!this.chatInput.trim()) return;
+                    if (!this.apiKey) {
+                        this.showSettings = true;
+                        return;
+                    }
+                    const userMsg = this.chatInput;
+                    this.chatHistory.push({ role: 'user', text: userMsg });
                     this.chatInput = '';
                     this.chatLoading = true;
 
-                    // Scroll down
                     setTimeout(() => {
-                        const container = document.getElementById('chat-container');
-                        container.scrollTop = container.scrollHeight;
+                        this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
                     }, 50);
 
-                    const systemPrompt = `You are TrailTuned AI, an expert pro mountain bike suspension tuner and master mechanic. The user is riding a ${this.activeBike.name} (${this.activeBike.category}), weighing ${this.activeBike.riderWeight} ${this.activeBike.weightUnit} in full gear. Fork: ${this.activeBike.fork.model}. Shock: ${this.activeBike.shock.model}. Tires: ${this.activeBike.tires}. Give direct, expert, friendly mechanic advice.`;
-
-                    const contentsHistory = this.chatMessages.map(m => ({
-                        role: m.role === 'user' ? 'user' : 'model',
-                        parts: [{ text: m.text }]
-                    }));
+                    const contextPrompt = `You are an elite mountain bike race mechanic. 
+The rider is on a ${this.bike.brand} ${this.bike.model}, weighing ${this.bike.riderWeight} ${this.weightUnit}, with ${this.bike.fork} and ${this.bike.shock} at ${this.trailLocation}.
+User question: ${userMsg}`;
 
                     try {
-                        const apiKey = "";
-                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-                        const payload = {
-                            contents: contentsHistory,
-                            systemInstruction: { parts: [{ text: systemPrompt }] }
-                        };
-
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const result = await response.json();
-                        const candidate = result.candidates?.[0];
-                        if (candidate && candidate.content?.parts?.[0]?.text) {
-                            const reply = candidate.content.parts[0].text;
-                            this.chatMessages.push({ role: 'assistant', text: reply });
-                        } else {
-                            throw new Error('Failed to get response');
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        this.chatMessages.push({ role: 'assistant', text: 'I encountered a temporary connection issue. As a general rule of thumb for your setup, check your sag and rebound clicks, and make sure your tire pressures match the terrain!' });
+                        const replyText = await this.callGeminiApi(contextPrompt);
+                        this.chatHistory.push({ role: 'assistant', text: replyText });
+                    } catch(err) {
+                        this.chatHistory.push({ role: 'assistant', text: `AI Mechanic Error: ${err.message}` });
                     } finally {
                         this.chatLoading = false;
                         setTimeout(() => {
-                            const container = document.getElementById('chat-container');
-                            container.scrollTop = container.scrollHeight;
+                            this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
                         }, 50);
                     }
                 }
